@@ -1,0 +1,10 @@
+{
+   "extends":"fastify-tsconfig",
+   "compilerOptions": {
+    "incremental": true,
+    "outDir": "dist"
+   },
+   "watchOptions": {
+    "excludeDirectories": ["**/node_modules", "dist", "temp/*"]
+},
+}

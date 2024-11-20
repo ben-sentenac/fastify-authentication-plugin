@@ -123,12 +123,41 @@ This plugin decorates the Fastify instance with the following:
 `fastify.mysql`: Provides MySQL query capabilities if not already registered.
 ## TODO
 - [x]   Enhance plugin validation with ajv
-- [ ]   Add refresh-token route
+- [x]   Add refresh-token route
 - [ ]   Implement token-based password reset
 - [ ]   Create a static registration page
 - [ ]   Add email verification for new user registrations
 - [ ]   Implement user roles and permissions
 - [ ]   Integrate OAuth2 support
 
+
+```js
+//exemple with cors
+import fastifyCors from '@fastify/cors';
+
+app.register(fastifyCors, {
+  origin: ['https://yourfrontend.com', 'https://anothertrusted.com'], // Allowed origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
+  credentials: true, // Allow cookies to be sent with requests
+});
+
+//in dev mode
+app.register(fastifyCors, {
+  origin: ['http://localhost:3000'], // Allow local frontend to access the backend
+  credentials: true, // Allow cookies (JWT token)
+});
+//rate limit 
+app.register(fastifyRateLimit, {
+  max: 100, // Maximum number of requests within the time window
+  timeWindow: '1 minute', // Time window (1 minute)
+  cache: 10000, // Number of unique clients to remember
+  whitelist: ['127.0.0.1'], // Whitelisted IP addresses (e.g., internal services)
+  redis, // Use Redis to store rate limit information across distributed servers
+  skipOnError: false, // Block requests if Redis is down
+});
+
+
+
+```
 
 > **Warning:** This plugin is currently under development. Features and APIs may change.
