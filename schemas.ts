@@ -1,11 +1,11 @@
 export const PluginOptionsSchema = {
     type: 'object',
     properties: {
-        createTable:{
-            type:'boolean',
-        },
         routePrefix: {
             type: 'string'
+        },
+        tokenStorage:{
+            enum:['cookie','header']
         },
         jwtOptions: {
             type:['object'],

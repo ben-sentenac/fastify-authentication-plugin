@@ -99,6 +99,7 @@ The plugin registers the following routes under the configured routePrefix (defa
 
 | Option                  | Type                     | Description                                                 |
 |-------------------------|--------------------------|-------------------------------------------------------------|
+| `tokenStorage`           | `enum: cookie or header` | choose token storage method . Default is `cookie'
 | `routePrefix`           | `string`                 | Prefix for all auth-related routes. Default is `/auth`.     |
 | `jwtSecret`             | `string`                 | Secret key for signing JWT tokens. Required.                |
 | `databasePool`| `FastifyMySQLOptions`    | Configuration for MySQL database connection. Required.      |
@@ -108,13 +109,13 @@ The plugin registers the following routes under the configured routePrefix (defa
 The cookieOptions object allows for customization of secure cookie behavior.
 | Option         | Type                  | Description                                                         |
 |----------------|-----------------------|---------------------------------------------------------------------|
-| `secret`       | `string | Buffer`     | Secret key for cookie signing. Required.                            |
+| `secret`       | `string or Buffer`     | Secret key for cookie signing. Required.                            |
 | `expires`      | `Date`                | Expiration date of the cookie. Optional.                            |
 | `maxAge`       | `number`              | Maximum age of the cookie in seconds. Optional.                     |
 | `secure`       | `boolean`             | Only send cookies over HTTPS if true.                               |
 | `path`         | `string`              | Path where the cookie is accessible. Default is `/`.                |
 | `domain`       | `string`              | Domain where the cookie is accessible. Optional.                    |
-| `sameSite`     | `'strict' | 'lax' | 'none'` | SameSite policy. Default is `strict`.                              |
+| `sameSite`     | `'strict' or 'lax' or 'none' or SameSite policy |. Default is `strict`.                              |
 
 ### Authentication Decorators
 This plugin decorates the Fastify instance with the following:

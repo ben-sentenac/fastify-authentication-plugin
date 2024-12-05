@@ -42,12 +42,8 @@ async function auth(fastify: FastifyInstance, options: AuthPluginOptions) {
             expires:24*60*60,
         }
     };
-
-    const pluginOptions = deepMerge({ ...defaultOptions}, options );
-    //validate options;
-   validateSchema(PluginOptionsSchema,pluginOptions);
-
-    
+    validateSchema(PluginOptionsSchema,options);
+    const pluginOptions = deepMerge({ ...defaultOptions}, options );   
     const { jwtOptions, routePrefix, cookieOptions, databasePool,refreshTokenOptions } = pluginOptions;
 
     if(!fastify.hasDecorator('mysql')) {
@@ -79,7 +75,7 @@ async function auth(fastify: FastifyInstance, options: AuthPluginOptions) {
                 accessToken = request.cookies.accessToken
             }
            if(!accessToken) {
-            throw new Error('Missing token');
+                throw new Error('Missing token');
            }
            //TODO:
            /* Check if token is blacklisted
