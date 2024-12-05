@@ -2,9 +2,10 @@
 ---
 # Task: Plugin improvment
 - [x] Add auth and cookie options in a decorator
+- [x] Add header or cookie token storage options
 - [ ] Add redis db
 - [ ] Add blackListedToken in database (when user logout)
-- [-] add simple session authentication option
+- [ ] add simple session authentication option
 # Task: Add UserModels
 - [x] Add UserModel.store
 - [x] Add UserModel.findByEmail
@@ -14,6 +15,6 @@
 # Task: token Base authentication
 - [x] Add refresh token route
 - [x] Test refresh token route
-- [/] test logout route
+- [ ] test logout route
 # Task Add Role based auth
 ---

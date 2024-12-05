@@ -6,7 +6,7 @@ import { LoginRequestRouteSchema,RegisterRouteSchema } from "./schemas.js";
 //TODO: Add rate limit on sensible routes login logout token 
 export async function routes(fastify: FastifyInstance) {
 
-    fastify.get('/', (request: FastifyRequest, reply: FastifyReply) => reply.code(200).send({ status: 'OK' }));
+    fastify.get('/up', (request: FastifyRequest, reply: FastifyReply) => reply.code(200).send({ status: 'OK' }));
 
     fastify.post('/register', {schema:RegisterRouteSchema},async (request:FastifyRequest<{Body:RegisterRequestBody}>,reply) => {
         const { email,username,password } = request.body;
@@ -29,6 +29,7 @@ export async function routes(fastify: FastifyInstance) {
     fastify.post('/login', {schema:LoginRequestRouteSchema}, async (request: FastifyRequest<{Body:LoginRequestBody}>, reply: FastifyReply) => {
         const { email, password } = request.body;
         const userModel = new UserModel(fastify.mysql);
+        const { tokenStorageLocation } = fastify
         try {
             const user = await userModel.findByEmail(email);
 
@@ -37,7 +38,6 @@ export async function routes(fastify: FastifyInstance) {
             }
     
             const accessToken = fastify.jwt.sign({ id: user.id, email: user.email });
-
             const refreshToken = fastify.jwt.sign({ id: user.id, email: user.email }, { expiresIn: '7d' })// Refresh token valid for 7 days
     
             //TODO Save refresh token in db
@@ -46,6 +46,7 @@ export async function routes(fastify: FastifyInstance) {
             expiresAt.setSeconds(expiresAt.getSeconds() + 7 * 24 *60 *60);
 
             const refreshTokenModel = new RefreshTokenModel(fastify.mysql);
+            
             await refreshTokenModel.store({
                 user_id: user.id,
                 refresh_token: refreshToken,
@@ -53,6 +54,12 @@ export async function routes(fastify: FastifyInstance) {
                 user_agent: request.headers['user-agent'] ?? null,
                 expires_at: expiresAt,
             });
+
+            if(tokenStorageLocation === 'header') {
+                return reply
+                .header('authorization',`Bearer ${accessToken}`)
+                .send({accessToken});
+            }
 
             return reply
                 .setCookie(
@@ -75,7 +82,7 @@ export async function routes(fastify: FastifyInstance) {
     });
 
     //POST /LOGOUT 
-
+    //TODO add logic if token stored in header
     fastify.post('/logout',{preHandler:fastify.authenticate}, async (request,reply) => {
         const refreshToken = request.cookies.refreshToken;
         try {
@@ -97,6 +104,7 @@ export async function routes(fastify: FastifyInstance) {
 
     //POST /TOKEN refresh token route
     fastify.post('/token', async (request:FastifyRequest,reply:FastifyReply) => {
+
             const { refreshToken } = request.cookies;
            
            if(!refreshToken) {

@@ -1,3 +1,50 @@
+export const PluginOptionsSchema = {
+    type: 'object',
+    properties: {
+        createTable:{
+            type:'boolean',
+        },
+        routePrefix: {
+            type: 'string'
+        },
+        jwtOptions: {
+            type:['object'],
+        },
+        databasePool:{
+            type:'object',
+            properties:{
+                host:{
+                    type:'string',
+                },
+                user:{
+                    type:'string'
+                },
+                password:{
+                    type:'string'
+                },
+                database:{
+                    type:'string'
+                }
+            },
+            required:['user','password','database']
+        },
+        cookieOptions: {
+            type: 'object',
+            properties: {
+                secret: {
+                    type: 'string'
+                },
+                parseOptions:{
+                    type:'object'
+                }
+            }
+        }
+    }
+};
+
+
+
+
 export const  LoginRequestRouteSchema = {
     body:{
         type:'object',

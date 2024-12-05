@@ -5,6 +5,7 @@ import { FastifyMySQLOptions } from "@fastify/mysql"
 export interface AuthPluginOptions {
     createTable?:boolean
     routePrefix?:string,
+    tokenStorage:'cookie' | 'header',
     databasePool:FastifyMySQLOptions,
     jwtOptions?:FastifyJWTOptions,
     cookieOptions?:FastifyCookieOptions

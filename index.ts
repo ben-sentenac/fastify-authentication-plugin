@@ -2,76 +2,30 @@ import { FastifyInstance, FastifyRequest,FastifyReply,RouteHandlerMethod } from 
 import fp from 'fastify-plugin';
 import { routes } from './routes.js';
 import { AuthPluginOptions } from './types.js';
-import { Ajv } from 'ajv';
+
 import { deepMerge } from './utils/functions.js';
 import fastifyJwt from '@fastify/jwt';
 import fastifyCookie from '@fastify/cookie';
 import { randomBytes } from 'node:crypto';
 import fastifyMysql, { MySQLPromisePool } from '@fastify/mysql';
+import { PluginOptionsSchema } from './schemas.js';
+import { validateSchema } from './services.js';
 
 declare module 'fastify' {
     interface FastifyInstance {
         authenticate: RouteHandlerMethod,
         mysql:MySQLPromisePool,
+        tokenStorageLocation:'cookie' | 'header',
         utils:any
     }
 };
 
-const optionsSchema = {
-    type: 'object',
-    properties: {
-        createTable:{
-            type:'boolean',
-        },
-        routePrefix: {
-            type: 'string'
-        },
-        jwtOptions: {
-            type:['object'],
-        },
-        databasePool:{
-            type:'object',
-            properties:{
-                host:{
-                    type:'string',
-                },
-                user:{
-                    type:'string'
-                },
-                password:{
-                    type:'string'
-                },
-                database:{
-                    type:'string'
-                }
-            },
-            required:['user','password','database']
-        },
-        cookieOptions: {
-            type: 'object',
-            properties: {
-                secret: {
-                    type: 'string'
-                },
-                parseOptions:{
-                    type:'object'
-                }
-            }
-        }
-    }
-};
-
-const ajv = new Ajv({
-    allowUnionTypes: true
-});
-
-
 async function auth(fastify: FastifyInstance, options: AuthPluginOptions) {
 
     const defaultOptions = {
-        createTable:true,
         routePrefix: '/auth',
         databasePool:null,
+        tokenStorage:'cookie',
         jwtOptions:{
             secret:randomBytes(32).toString('hex'),
         },
@@ -81,7 +35,7 @@ async function auth(fastify: FastifyInstance, options: AuthPluginOptions) {
                 httpOnly:true,//Note: be careful when setting this to true, as compliant clients will not allow client-side JavaScript to see the cookie in document.cookie.
                 maxAge:1800,
                 path:'/',
-                secure:false
+                secure:true
             }
         },
         refreshTokenOptions:{
@@ -90,49 +44,40 @@ async function auth(fastify: FastifyInstance, options: AuthPluginOptions) {
     };
 
     const pluginOptions = deepMerge({ ...defaultOptions}, options );
+    //validate options;
+   validateSchema(PluginOptionsSchema,pluginOptions);
 
-    const valid = ajv.validate(optionsSchema, pluginOptions);
+    
+    const { jwtOptions, routePrefix, cookieOptions, databasePool,refreshTokenOptions } = pluginOptions;
 
-    if (!valid) {
-        console.error(ajv.errors);
-        if (ajv.errors) {
-            for (const error of ajv.errors) {
-                throw new TypeError(`Auth plugin fail to load > OPTIONS_ERROR: options${error.instancePath.replaceAll('/','.')} ${error.message}`);
-            }
-        }
-    }
-    const { jwtOptions, routePrefix, cookieOptions, databasePool,createTable,refreshTokenOptions } = pluginOptions;
-
-    if(!fastify.mysql) {
+    if(!fastify.hasDecorator('mysql')) {
         fastify.register(fastifyMysql,{
             promise:true,
             ...databasePool
         });
-    }
-
-    //TODO: create tables  
-    if(createTable) {
-        //
-    }
-        
-    if(!fastify.jwt) {
+    }  
+    if(!fastify.hasDecorator('jwt')) {
         fastify.register(fastifyJwt,jwtOptions);
     }
-
-    if(!fastify.serializeCookie) {
+    if(!fastify.hasDecorator('serializeCookie')) {
         fastify.register(fastifyCookie,cookieOptions);
     }
-
+    fastify.decorate('tokenStorageLocation',pluginOptions.tokenStorage);
     fastify.decorate('utils',{
         refreshTokenExpires:refreshTokenOptions.expires
     });
 
     /**
-     * token is stored in cookie we could also store in headers {authorization: Brearer ${token} and use request.JwtVerify()}
+     * token is stored in cookie we could also store in headers {authorization: Bearer ${token} and use request.JwtVerify()}
      */
     fastify.decorate('authenticate',async (request:FastifyRequest,reply:FastifyReply) => {
        try {
-           const { accessToken } = request.cookies;
+        let accessToken;
+            if(fastify.tokenStorageLocation === 'header') {
+                accessToken = request.headers.authorization?.split(' ')[1].trim();
+            } else {
+                accessToken = request.cookies.accessToken
+            }
            if(!accessToken) {
             throw new Error('Missing token');
            }
