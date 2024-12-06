@@ -14,11 +14,12 @@ RESET_PASSWORD_TOKEN_EXPIRE
     tokensOptions:{
         accessTokenSecret:string
         refreshTokenSecret:string,
-        accesTokenExpires:date
-        refreshTokenExpires:date,
+        accesTokenExpires:string | number
+        refreshTokenExpires:string | number,
         passwordResetToken:string
         csrfToken:string
-    }
+    },
+    cookieOptions: FastifyCookieOptions
 }
 
 ```

@@ -15,10 +15,9 @@ declare module 'fastify' {
     interface FastifyInstance {
         authenticate: RouteHandlerMethod,
         mysql:MySQLPromisePool,
-        authOptions:{
-            cookies:fastifyCookie.ParseOptions,
-            tokenStorage:'header' | 'cookie',
-            refreshTokenExpires:number
+        authUtils:{
+            refreshTokenExpires: number,
+            accessTokenExpires:number
         }
     }
 };
@@ -26,29 +25,32 @@ declare module 'fastify' {
 async function auth(fastify: FastifyInstance, options: AuthPluginOptions) {
 
     const defaultOptions = {
-        tokenStorage:'cookie',
-        routePrefix: '/auth',
-        databasePool:null,
-        jwtOptions:{
-            secret:randomBytes(32).toString('hex'),
-        },
-        cookieOptions: { //one day
-            secret: randomBytes(32).toString('hex'),
-            parseOptions:{
-                httpOnly:true,//Note: be careful when setting this to true, as compliant clients will not allow client-side JavaScript to see the cookie in document.cookie.
-                maxAge:1800,
-                path:'/',
-                secure:true
-            }
-        },
-        refreshTokenOptions:{
-            expires:24*60*60,
+       routePrefix:'auth',
+       databasePool:null,
+       tokens:{
+            accessTokenSecret:randomBytes(32).toString(),
+            refreshTokenSecret:randomBytes(32).toString(),
+            accesTokenExpires:15 * 60,
+            refreshTokenExpires:7 * 24 * 60 * 60,
+            rememberToken:randomBytes(32).toString(),
+            passwordResetToken:randomBytes(32).toString()
+       },
+       cookieOptions: {
+        secret:randomBytes(32).toString(),
+        parseOptions: {
+            httpOnly:true,
+            secure:true,
+            sameSite:'strict',
+            path:'/',
         }
+       }
     };
-    validateSchema(PluginOptionsSchema,options);
-    const pluginOptions = deepMerge({ ...defaultOptions}, options );   
-    const { jwtOptions, routePrefix, cookieOptions, databasePool,refreshTokenOptions } = pluginOptions;
 
+    validateSchema(PluginOptionsSchema,options);
+
+    const pluginOptions = deepMerge({ ...defaultOptions}, options );   
+    const { tokens, routePrefix, databasePool,cookieOptions } = pluginOptions;
+    const { accessTokenSecret,accessTokenExpires,refreshTokenExpires } = tokens;
     if(!fastify.hasDecorator('mysql')) {
         fastify.register(fastifyMysql,{
             promise:true,
@@ -56,17 +58,22 @@ async function auth(fastify: FastifyInstance, options: AuthPluginOptions) {
         });
     }  
     if(!fastify.hasDecorator('jwt')) {
-        fastify.register(fastifyJwt,jwtOptions);
+        fastify.register(fastifyJwt,{
+            secret:accessTokenSecret
+        });
     }
     if(!fastify.hasDecorator('serializeCookie')) {
-        fastify.register(fastifyCookie,cookieOptions);
+        fastify.register(fastifyCookie,{
+            secret:cookieOptions.secret,
+            parseOptions:{
+                maxAge:accessTokenExpires,
+                ...cookieOptions.parseOptions
+            }
+        });
     }
-    fastify.decorate('authOptions',{
-        cookies:{
-            ...cookieOptions.parseOptions
-        },
-        refreshTokenExpires:refreshTokenOptions.expires,
-        tokenStorage:pluginOptions.tokenStorage
+    fastify.decorate('authUtils',{
+        accessTokenExpires,
+        refreshTokenExpires
     });
 
     /**

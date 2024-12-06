@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { verifyPassword } from "./services.js";
+import { generateJWT, verifyPassword } from "./services.js";
 import {  UserModel, RefreshTokenModel} from "./models.js";
 import { JWTPayload, LoginRequestBody, RegisterRequestBody } from "./types.js";
 import { LoginRequestRouteSchema,RegisterRouteSchema } from "./schemas.js";
@@ -28,8 +28,8 @@ export async function routes(fastify: FastifyInstance) {
     //TODO add ratelimit 
     fastify.post('/login', {schema:LoginRequestRouteSchema}, async (request: FastifyRequest<{Body:LoginRequestBody}>, reply: FastifyReply) => {
         const { email, password } = request.body;
-        const { tokenStorage,refreshTokenExpires } = fastify.authOptions;
         const userModel = new UserModel(fastify.mysql);
+        const { refreshTokenExpires,accessTokenExpires } = fastify.authUtils;
         try {
             const user = await userModel.findByEmail(email);
 
@@ -37,11 +37,9 @@ export async function routes(fastify: FastifyInstance) {
                 return reply.code(401).send({ success:false, error: 'Invalid credentials' });
             }
     
-            const accessToken = fastify.jwt.sign({ id: user.id, email: user.email },{expiresIn:'15m'});
-            const refreshToken = fastify.jwt.sign({ id: user.id, email: user.email }, { expiresIn: '7d' })// Refresh token valid for 7 days
+            const accessToken = generateJWT(fastify,{id: user.id, email: user.email });
+            const refreshToken = generateJWT(fastify,{ id: user.id, email: user.email })// Refresh token valid for 7 days
     
-            //TODO Save refresh token in db
-
             const expiresAt = new Date();
             expiresAt.setSeconds(expiresAt.getSeconds() + 7 * 24 *60 *60);
 
@@ -56,18 +54,13 @@ export async function routes(fastify: FastifyInstance) {
                 user_agent: request.headers['user-agent'] ?? null,
                 expires_at: expiresAt,
             });
-
-            if(tokenStorage === 'header') {
-                return reply
-                .header('authorization',`Bearer ${accessToken}`)
-                .header('X-Refresh-Token',refreshToken)
-                .send({accessToken,accessTokenExpiresIn: 15 * 60, });// 15 minutes
-            }
-
             return reply
                 .setCookie(
                     'accessToken',
                     accessToken,
+                    {
+                        maxAge:accessTokenExpires ?? 15 * 60
+                    }
                 )
                 .setCookie('refreshToken',
                     refreshToken,
@@ -97,8 +90,8 @@ export async function routes(fastify: FastifyInstance) {
             //clear cookie
            // Clear cookies
             return reply
-            .clearCookie('access_token', { path: '/' })
-            .clearCookie('refresh_token', { path: '/refresh-token' })
+            .clearCookie('accessToken', { path: '/' })
+            .clearCookie('refreshToken', { path: '/refresh-token' })
             .send({ message: 'Logged out successfully' });
         } catch (error) {
             reply.status(500).send({ error: 'Logout failed' }); 
@@ -106,10 +99,9 @@ export async function routes(fastify: FastifyInstance) {
     });
 
     //POST /TOKEN refresh token route
-    fastify.post('/token', async (request:FastifyRequest,reply:FastifyReply) => {
-        const refreshToken = fastify.authOptions.tokenStorage === 'header'
-        ? request.headers['X-Refresh-Token'] as string
-        : request.cookies.refreshToken;
+    fastify.post('/refresh-token', async (request:FastifyRequest,reply:FastifyReply) => {
+        const { accessTokenExpires } = fastify.authUtils;
+        const refreshToken  = request.cookies.refreshToken;
            if(!refreshToken) {
                 return reply.code(400).send({ success:false, error: 'Refresh token missing' });
            }
@@ -121,13 +113,13 @@ export async function routes(fastify: FastifyInstance) {
                 throw new Error('Invalid refresh token');
             }
 
-            const newAccessToken = fastify.jwt.sign({id:payload.id,email:payload.email},{expiresIn:'15m'});
-
+            const newAccessToken = generateJWT(fastify,{id:payload.id,email:payload.email});
+            //TODO delete old refreshToken 
             return reply.setCookie(
                 'accessToken',
                 newAccessToken,
                 {
-                maxAge:15*60}
+                maxAge:accessTokenExpires ?? 15 * 60}
             ).send({sucess:true, message: 'Access token refreshed' })
            } catch (error) {
             return reply.code(401).send({success:false, error: 'Unauthorized', message: error instanceof Error ? error.message : String(error) });

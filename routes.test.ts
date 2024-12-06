@@ -45,7 +45,10 @@ describe('Auth plugin routes test suite with cookie', async () => {
     await app.register(authentication, {
         routePrefix: 'api/auth',
         databasePool: pool,
-        tokenStorage: 'cookie'
+        tokens:{
+            accessTokenSecret:'some-secret',
+            accessTokenExpires:60
+        }
     });
 
     app.get('/secret', { preHandler: app.authenticate }, (request, reply) => {
@@ -189,9 +192,9 @@ describe('Auth plugin routes test suite with cookie', async () => {
     });
 
     //TODO: check expire token
-    it('POST /token must respond 400 if no refresh token passed in request.cookies', async (t) => {
+    it('POST /refresh-token must respond 400 if no refresh token passed in request.cookies', async (t) => {
         const response = await app.inject({
-            url: 'api/auth/token',
+            url: 'api/auth/refresh-token',
             method: 'POST',
             cookies: {}
         });
@@ -199,9 +202,9 @@ describe('Auth plugin routes test suite with cookie', async () => {
         assert.deepStrictEqual(response.json(), { success: false, error: 'Refresh token missing' });
     });
 
-    it('POST /token respond 200', async (t) => {
+    it('POST /refresh-token respond 200', async (t) => {
         const response = await app.inject({
-            url: 'api/auth/token',
+            url: 'api/auth/refresh-token',
             method: 'POST',
             cookies: { refreshToken }
         });
@@ -217,11 +220,10 @@ describe('Auth plugin routes test suite with cookie', async () => {
                 accessToken
             }
         });
-
         assert.equal(response.statusCode, 200);
     });
 });
-
+/*
 describe('Test with authorization header', async () => {
     let pool: FastifyMySQLOptions = {
         host: process.env.DB_HOST,
@@ -252,7 +254,6 @@ describe('Test with authorization header', async () => {
     await app.register(authentication, {
         routePrefix: 'api/auth',
         databasePool: pool,
-        tokenStorage: 'header'
     });
 
     app.get('/secret', { preHandler: app.authenticate }, (request, reply) => {
@@ -300,3 +301,4 @@ describe('Test with authorization header', async () => {
         assert.equal(response.statusCode,200);
     });
 });
+*/

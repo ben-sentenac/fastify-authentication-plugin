@@ -4,12 +4,6 @@ export const PluginOptionsSchema = {
         routePrefix: {
             type: 'string'
         },
-        tokenStorage:{
-            enum:['cookie','header']
-        },
-        jwtOptions: {
-            type:['object'],
-        },
         databasePool:{
             type:'object',
             properties:{
@@ -28,16 +22,31 @@ export const PluginOptionsSchema = {
             },
             required:['user','password','database']
         },
-        cookieOptions: {
+        tokens: {
             type: 'object',
             properties: {
-                secret: {
+                accessTokenSecret: {
                     type: 'string'
                 },
-                parseOptions:{
-                    type:'object'
-                }
+               refreshTokenSecret:{
+                    type:'string'
+                },
+                accessTokenExpires:{
+                    type:'number'
+                },
+                refreshTokenExpires:{
+                    type: 'number'
+                },
+                rememberToken:{
+                    type:'string'
+                },
+                passwordResetToken:{
+                    type:'string'
+                },
             }
+        },
+        cookieOptions:{
+            type:'object'
         }
     }
 };

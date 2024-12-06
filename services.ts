@@ -14,8 +14,8 @@ export async function hashPassword(password: string) {
 export async function verifyPassword(password: string, hash: string) {
     return compare(password, hash);
 }
-export async function generateJWT(fastify: FastifyInstance,user: Partial<User>,options?:fastifyJwt.FastifyJwtSignOptions) {
-    return fastify.jwt.sign({ id: user.id, email: user.email });
+export function generateJWT(fastify: FastifyInstance,user: Partial<User>,options?:Partial<fastifyJwt.SignOptions>) {
+    return fastify.jwt.sign(user,options);
 }
 
 export function verifyToken(fastify:FastifyInstance,token:string,options?:Partial<fastifyJwt.VerifyOptions>,) {
