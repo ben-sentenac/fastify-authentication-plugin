@@ -28,8 +28,8 @@ export async function routes(fastify: FastifyInstance) {
     //TODO add ratelimit 
     fastify.post('/login', {schema:LoginRequestRouteSchema}, async (request: FastifyRequest<{Body:LoginRequestBody}>, reply: FastifyReply) => {
         const { email, password } = request.body;
+        const { tokenStorage,refreshTokenExpires } = fastify.authOptions;
         const userModel = new UserModel(fastify.mysql);
-        const { tokenStorageLocation } = fastify
         try {
             const user = await userModel.findByEmail(email);
 
@@ -37,7 +37,7 @@ export async function routes(fastify: FastifyInstance) {
                 return reply.code(401).send({ success:false, error: 'Invalid credentials' });
             }
     
-            const accessToken = fastify.jwt.sign({ id: user.id, email: user.email });
+            const accessToken = fastify.jwt.sign({ id: user.id, email: user.email },{expiresIn:'15m'});
             const refreshToken = fastify.jwt.sign({ id: user.id, email: user.email }, { expiresIn: '7d' })// Refresh token valid for 7 days
     
             //TODO Save refresh token in db
@@ -47,6 +47,8 @@ export async function routes(fastify: FastifyInstance) {
 
             const refreshTokenModel = new RefreshTokenModel(fastify.mysql);
             
+            //TODO if old token invalidate (token rotation)
+            //add is valid property 
             await refreshTokenModel.store({
                 user_id: user.id,
                 refresh_token: refreshToken,
@@ -55,10 +57,11 @@ export async function routes(fastify: FastifyInstance) {
                 expires_at: expiresAt,
             });
 
-            if(tokenStorageLocation === 'header') {
+            if(tokenStorage === 'header') {
                 return reply
                 .header('authorization',`Bearer ${accessToken}`)
-                .send({accessToken});
+                .header('X-Refresh-Token',refreshToken)
+                .send({accessToken,accessTokenExpiresIn: 15 * 60, });// 15 minutes
             }
 
             return reply
@@ -69,7 +72,7 @@ export async function routes(fastify: FastifyInstance) {
                 .setCookie('refreshToken',
                     refreshToken,
                     {
-                        maxAge: fastify.utils.refreshTokenExpires ?? 7 * 24 * 60 * 60
+                        maxAge:refreshTokenExpires ?? 7 * 24 * 60 * 60
                     }
                 )
                 .send({
@@ -104,13 +107,12 @@ export async function routes(fastify: FastifyInstance) {
 
     //POST /TOKEN refresh token route
     fastify.post('/token', async (request:FastifyRequest,reply:FastifyReply) => {
-
-            const { refreshToken } = request.cookies;
-           
+        const refreshToken = fastify.authOptions.tokenStorage === 'header'
+        ? request.headers['X-Refresh-Token'] as string
+        : request.cookies.refreshToken;
            if(!refreshToken) {
                 return reply.code(400).send({ success:false, error: 'Refresh token missing' });
            }
-
            try {
             const payload:JWTPayload = fastify.jwt.verify(refreshToken);
             const refreshTokenModel = new RefreshTokenModel(fastify.mysql);

@@ -15,17 +15,20 @@ declare module 'fastify' {
     interface FastifyInstance {
         authenticate: RouteHandlerMethod,
         mysql:MySQLPromisePool,
-        tokenStorageLocation:'cookie' | 'header',
-        utils:any
+        authOptions:{
+            cookies:fastifyCookie.ParseOptions,
+            tokenStorage:'header' | 'cookie',
+            refreshTokenExpires:number
+        }
     }
 };
 
 async function auth(fastify: FastifyInstance, options: AuthPluginOptions) {
 
     const defaultOptions = {
+        tokenStorage:'cookie',
         routePrefix: '/auth',
         databasePool:null,
-        tokenStorage:'cookie',
         jwtOptions:{
             secret:randomBytes(32).toString('hex'),
         },
@@ -58,22 +61,20 @@ async function auth(fastify: FastifyInstance, options: AuthPluginOptions) {
     if(!fastify.hasDecorator('serializeCookie')) {
         fastify.register(fastifyCookie,cookieOptions);
     }
-    fastify.decorate('tokenStorageLocation',pluginOptions.tokenStorage);
-    fastify.decorate('utils',{
-        refreshTokenExpires:refreshTokenOptions.expires
+    fastify.decorate('authOptions',{
+        cookies:{
+            ...cookieOptions.parseOptions
+        },
+        refreshTokenExpires:refreshTokenOptions.expires,
+        tokenStorage:pluginOptions.tokenStorage
     });
 
     /**
      * token is stored in cookie we could also store in headers {authorization: Bearer ${token} and use request.JwtVerify()}
      */
     fastify.decorate('authenticate',async (request:FastifyRequest,reply:FastifyReply) => {
-       try {
-        let accessToken;
-            if(fastify.tokenStorageLocation === 'header') {
-                accessToken = request.headers.authorization?.split(' ')[1].trim();
-            } else {
-                accessToken = request.cookies.accessToken
-            }
+       try {  
+             const accessToken = request.headers.authorization?.split(' ')[1].trim() ?? request.cookies.accessToken;
            if(!accessToken) {
                 throw new Error('Missing token');
            }
