@@ -23,6 +23,7 @@
     "fastify-plugin": "^5.0.1"
   },
   "scripts": {
+    "build":"tsc",
     "test": "./node_modules/.bin/dotenvx run -f .env -- borp",
     "db:create:tables": "tsx --env-file=.env scripts/createTables.ts",
     "db:create": "tsx --env-file=.env scripts/createDatabase.ts",
