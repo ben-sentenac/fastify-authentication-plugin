@@ -49,12 +49,15 @@ const server = Fastify();
 
 server.register(authPlugin, {
   routePrefix: '/auth',
-  jwtSecret: process.env.JWT_SECRET,
   databasePool: { host: 'localhost', user: 'root', database: 'mydb' },
+  tokensOptions:{
+    accessTokenSecret:process.env.ACCESS_TOKEN_SECRET,
+    refreshTokenSecret:process.env.REFRESH_TOKEN_SECRET,
+    accessTokenExpires:15*60,//15 minutes
+    refreshTokenExpires:7*24*60 //7days
+  }
   cookieOptions: {
     secret: process.env.COOKIE_SECRET,
-    secure: true,
-    maxAge: 86400 // 1 day
   }
 });
 
@@ -99,23 +102,21 @@ The plugin registers the following routes under the configured routePrefix (defa
 
 | Option                  | Type                     | Description                                                 |
 |-------------------------|--------------------------|-------------------------------------------------------------|
-| `tokenStorage`           | `enum: cookie or header` | choose token storage method . Default is `cookie'
-| `routePrefix`           | `string`                 | Prefix for all auth-related routes. Default is `/auth`.     |
-| `jwtSecret`             | `string`                 | Secret key for signing JWT tokens. Required.                |
+| `routePrefix`           | `string`                 | Prefix for all auth-related routes. Default is `/auth`.     
 | `databasePool`| `FastifyMySQLOptions`    | Configuration for MySQL database connection. Required.      |
+| `tokensOptions`         | `TokensOptions`          | Options for configuring tokens. Required.           |
 | `cookieOptions`         | `CookieOptions`          | Options for configuring secure cookies. Required.           |
+### TokensOptions
+| Option                  | Type                     | Description                                                 |
+|-------------------------|--------------------------|-------------------------------------------------------------|
+| `accessTokenSecret`           | `string` | secret to generate jwt required    
+| `refreshTokenSecret`| `string`| secret to generate refreshToken required
+| `accessTokenExpires`| `number`| accessToken expiration time default 15 minutes    
+| `refreshTokenExpires`| `number`|  refreshToken expiration time default 7 days.
 
 ### CookieOptions
-The cookieOptions object allows for customization of secure cookie behavior.
-| Option         | Type                  | Description                                                         |
-|----------------|-----------------------|---------------------------------------------------------------------|
-| `secret`       | `string or Buffer`     | Secret key for cookie signing. Required.                            |
-| `expires`      | `Date`                | Expiration date of the cookie. Optional.                            |
-| `maxAge`       | `number`              | Maximum age of the cookie in seconds. Optional.                     |
-| `secure`       | `boolean`             | Only send cookies over HTTPS if true.                               |
-| `path`         | `string`              | Path where the cookie is accessible. Default is `/`.                |
-| `domain`       | `string`              | Domain where the cookie is accessible. Optional.                    |
-| `sameSite`     | `'strict' or 'lax' or 'none' or SameSite policy |. Default is `strict`.                              |
+The cookieOptions object allows for customization of secure cookie  see:                           |
+https://github.com/fastify/fastify-cookie
 
 ### Authentication Decorators
 This plugin decorates the Fastify instance with the following:
@@ -157,7 +158,19 @@ app.register(fastifyRateLimit, {
   skipOnError: false, // Block requests if Redis is down
 });
 
-
+app.register(authPlugin, {
+  routePrefix: '/auth',
+  databasePool: { host: 'localhost', user: 'root', database: 'mydb' },
+  tokensOptions:{
+    accessTokenSecret:process.env.ACCESS_TOKEN_SECRET,
+    refreshTokenSecret:process.env.REFRESH_TOKEN_SECRET,
+    accessTokenExpires:15*60,//15 minutes
+    refreshTokenExpires:7*24*60 //7days
+  }
+  cookieOptions: {
+    secret: process.env.COOKIE_SECRET,
+  }
+});
 
 ```
 
