@@ -43,5 +43,5 @@ jobs:
           DB_USER: root
           DB_PASSWORD: testRootPassword
         run: |
-          npm db:create:tables
+          npm run db:create:tables
           npm run test
