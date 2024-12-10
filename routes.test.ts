@@ -19,6 +19,7 @@ describe('Auth plugin routes test suite with cookie', async () => {
     let accessToken: string;
     let refreshToken: string;
 
+    const accessTokenExpires = 3;
     const invalidEmail = 'test@io@epam.com';
 
     const invalidEmailMessage = 'body/email must match format "email"';
@@ -45,9 +46,9 @@ describe('Auth plugin routes test suite with cookie', async () => {
     await app.register(authentication, {
         routePrefix: 'api/auth',
         databasePool: pool,
-        tokens:{
+        tokensOptions:{
             accessTokenSecret:'some-secret',
-            accessTokenExpires:60
+            accessTokenExpires:accessTokenExpires
         }
     });
 
@@ -192,6 +193,23 @@ describe('Auth plugin routes test suite with cookie', async () => {
     });
 
     //TODO: check expire token
+
+    it('should expires after expiration time', async () => {
+        function delay(time:number) {
+            return new Promise(resolve => setTimeout(resolve, time));
+          }
+        await delay(accessTokenExpires * 1000);
+        console.log('after wait')
+        const response = await app.inject({
+            url: '/secret',
+            method: 'GET',
+            cookies: {
+                accessToken
+            }
+        });
+        assert.equal(response.statusCode, 401);
+    });
+
     it('POST /refresh-token must respond 400 if no refresh token passed in request.cookies', async (t) => {
         const response = await app.inject({
             url: 'api/auth/refresh-token',

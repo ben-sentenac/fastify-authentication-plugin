@@ -27,7 +27,7 @@ async function auth(fastify: FastifyInstance, options: AuthPluginOptions) {
     const defaultOptions = {
        routePrefix:'auth',
        databasePool:null,
-       tokens:{
+       tokensOptions:{
             accessTokenSecret:randomBytes(32).toString(),
             refreshTokenSecret:randomBytes(32).toString(),
             accesTokenExpires:15 * 60,
@@ -48,9 +48,9 @@ async function auth(fastify: FastifyInstance, options: AuthPluginOptions) {
 
     validateSchema(PluginOptionsSchema,options);
 
-    const pluginOptions = deepMerge({ ...defaultOptions}, options );   
-    const { tokens, routePrefix, databasePool,cookieOptions } = pluginOptions;
-    const { accessTokenSecret,accessTokenExpires,refreshTokenExpires } = tokens;
+    const pluginOptions = deepMerge({ ...defaultOptions}, options );
+    const { tokensOptions, routePrefix, databasePool,cookieOptions } = pluginOptions;
+    const { accessTokenSecret,accessTokenExpires,refreshTokenExpires } = tokensOptions;
     if(!fastify.hasDecorator('mysql')) {
         fastify.register(fastifyMysql,{
             promise:true,

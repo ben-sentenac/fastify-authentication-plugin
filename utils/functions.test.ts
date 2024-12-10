@@ -1,6 +1,7 @@
 import { describe,it } from "node:test";
 import assert from "node:assert";
 import { deepMerge } from "./functions.js";
+import { randomBytes } from "node:crypto";
 
 
 
@@ -182,4 +183,25 @@ describe('deepMerge test-suite', () => {
         assert.equal( elapsed< 10,true);
         assert.deepStrictEqual(merged.other,target.other);        
     });
+    it('should merge correctly', () => {
+        const defaultObj = {
+            a:"a",
+            secret:{
+                a:randomBytes(32).toString(),
+                b:randomBytes(32).toString(),
+            }
+        };
+
+        const opts = {
+            a:"must be me",
+            secret:{
+                a:"must be me",
+                b:"must be me"
+            }
+        };
+
+        const merged = deepMerge(defaultObj,opts);
+
+        assert.deepStrictEqual(merged,opts);
+    })
 });

@@ -22,7 +22,7 @@ export const PluginOptionsSchema = {
             },
             required:['user','password','database']
         },
-        tokens: {
+        tokensOptions: {
             type: 'object',
             properties: {
                 accessTokenSecret: {
@@ -46,7 +46,29 @@ export const PluginOptionsSchema = {
             }
         },
         cookieOptions:{
-            type:'object'
+            type:'object',
+            properties:{
+                secret:{
+                    type:'string'
+                },
+                parseOptions:{
+                    type:'object',
+                    properties:{
+                        httpOnly:{
+                            type:'boolean',
+                        },
+                        secure:{
+                            type:['boolean','string']
+                        },
+                        samesite:{
+                            type:'string'
+                        },
+                        path:{
+                            type:'string'
+                        }
+                    }
+                }
+            }
         }
     }
 };

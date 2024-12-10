@@ -161,4 +161,4 @@ app.register(fastifyRateLimit, {
 
 ```
 
-> **Warning:** This plugin is currently under development. Features and APIs may change.
+> **Warning:** This plugin is currently under development.Do not use yet Features and APIs may change.

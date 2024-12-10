@@ -4,7 +4,7 @@ import { FastifyMySQLOptions } from "@fastify/mysql"
 export interface AuthPluginOptions {
     routePrefix?:string,
     databasePool:FastifyMySQLOptions,
-    tokens?:{
+    tokensOptions?:{
         accessTokenSecret:string,
         refreshTokenSecret?:string,
         accessTokenExpires:number,

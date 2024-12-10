@@ -37,11 +37,11 @@ export async function routes(fastify: FastifyInstance) {
                 return reply.code(401).send({ success:false, error: 'Invalid credentials' });
             }
     
-            const accessToken = generateJWT(fastify,{id: user.id, email: user.email });
-            const refreshToken = generateJWT(fastify,{ id: user.id, email: user.email })// Refresh token valid for 7 days
+            const accessToken = generateJWT(fastify,{id: user.id, email: user.email },{expiresIn:accessTokenExpires});
+            const refreshToken = generateJWT(fastify,{ id: user.id, email: user.email },{expiresIn:refreshTokenExpires})// Refresh token valid for 7 days
     
             const expiresAt = new Date();
-            expiresAt.setSeconds(expiresAt.getSeconds() + 7 * 24 *60 *60);
+            expiresAt.setSeconds(expiresAt.getSeconds() + refreshTokenExpires);
 
             const refreshTokenModel = new RefreshTokenModel(fastify.mysql);
             
@@ -103,11 +103,13 @@ export async function routes(fastify: FastifyInstance) {
         const { accessTokenExpires } = fastify.authUtils;
         const refreshToken  = request.cookies.refreshToken;
            if(!refreshToken) {
-                return reply.code(400).send({ success:false, error: 'Refresh token missing' });
+                return reply.code(403).send({ success:false, error: 'forbidden' });
            }
            try {
             const payload:JWTPayload = fastify.jwt.verify(refreshToken);
+
             const refreshTokenModel = new RefreshTokenModel(fastify.mysql);
+            //TODO check if rrefreh token is still valid
             const storedToken = await refreshTokenModel.find('refresh_token',refreshToken);
             if(!storedToken || !payload) {
                 throw new Error('Invalid refresh token');
