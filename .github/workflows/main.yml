@@ -6,12 +6,17 @@ on:
     branches: [ "main" ]
 jobs:
   build:
+    env:
+      CI: true
+    strategy:
+      matrix: 
+        node-version: ['18.x','20.x','21.x','22.x','23.x']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js version 22
+      - name: Use Node.js version ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with: 
-          node-version: '22'
+          node-version: ${{ matrix.node-version }}
       - run: npm install
       - run: npm run build
