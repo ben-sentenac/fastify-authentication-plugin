@@ -18,6 +18,7 @@ describe('Auth plugin routes test suite with cookie', async () => {
 
     let accessToken: string;
     let refreshToken: string;
+    let newAccessToken:string;
 
     const accessTokenExpires = 3;
     const invalidEmail = 'test@io@epam.com';
@@ -216,8 +217,8 @@ describe('Auth plugin routes test suite with cookie', async () => {
             method: 'POST',
             cookies: {}
         });
-        assert.equal(response.statusCode, 400);
-        assert.deepStrictEqual(response.json(), { success: false, error: 'Refresh token missing' });
+        assert.equal(response.statusCode, 403);
+        assert.deepStrictEqual(response.json(), { success: false, error: 'Forbidden' });
     });
 
     it('POST /refresh-token respond 200', async (t) => {
@@ -226,97 +227,18 @@ describe('Auth plugin routes test suite with cookie', async () => {
             method: 'POST',
             cookies: { refreshToken }
         });
-
+        newAccessToken = response.cookies[0].value;
         assert.equal(response.statusCode, 200);
     });
 
-    it('should authenticate', async (t) => {
+    it('should authenticate with newAccessToken', async (t) => {
         const response = await app.inject({
             url: '/secret',
             method: 'GET',
             cookies: {
-                accessToken
+                accessToken:newAccessToken
             }
         });
         assert.equal(response.statusCode, 200);
     });
 });
-/*
-describe('Test with authorization header', async () => {
-    let pool: FastifyMySQLOptions = {
-        host: process.env.DB_HOST,
-        port: Number(process.env.DB_PORT),
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME
-    };
-    let accessToken: string | undefined;
-    //let refreshToken: string;
-    const user = {
-        email: 'userTest@example.com',
-        username: 'userTest',
-        password: 'password123'
-    }
-    let app = fastify();
-
-    app.register(fastifyCors, {
-        origin: ['http://localhost:8000'], // Allowed origins
-        methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
-        credentials: true, // Allow cookies to be sent with requests
-    });
-    app.register(fastifyRateLimit, {
-        max: 100,
-        timeWindow: '1 minute'
-    });
-
-    await app.register(authentication, {
-        routePrefix: 'api/auth',
-        databasePool: pool,
-    });
-
-    app.get('/secret', { preHandler: app.authenticate }, (request, reply) => {
-        return { message: 'shhh its a secret' };
-    });
-
-    before(async () => {
-        await truncateUsersTable();
-    });
-
-    after(async () => app.close());
-
-    it('should store token in header', async () => {
-        await app.inject({
-            url: 'api/auth/register',
-            method: 'POST',
-            body: user
-        });
-        const loginResponse = await app.inject({
-            url: '/api/auth/login',
-            method: 'post',
-            body: {
-                email: user.email,
-                password: user.password
-            }
-        });
-        const containHeader = Object.keys(loginResponse.headers).includes('authorization');
-        accessToken = containHeader ? loginResponse.headers.authorization?.split(' ')[1] : '';
-        if (accessToken) {
-            assert.equal(loginResponse.statusCode, 200);
-            assert.equal(containHeader, true);
-            assert.equal(typeof loginResponse.json().accessToken, 'string');
-            assert.equal(accessToken.length > 10, true);
-        }
-    });
-
-    it('should authenticate', async () => {
-        const response = await app.inject({
-            url: '/secret',
-            method: 'get',
-            headers:{
-                'authorization':`Bearer ${accessToken}`
-            }
-        });
-        assert.equal(response.statusCode,200);
-    });
-});
-*/

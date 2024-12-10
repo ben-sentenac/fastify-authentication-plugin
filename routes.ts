@@ -103,7 +103,7 @@ export async function routes(fastify: FastifyInstance) {
         const { accessTokenExpires } = fastify.authUtils;
         const refreshToken  = request.cookies.refreshToken;
            if(!refreshToken) {
-                return reply.code(403).send({ success:false, error: 'forbidden' });
+                return reply.code(403).send({ success:false, error: 'Forbidden' });
            }
            try {
             const payload:JWTPayload = fastify.jwt.verify(refreshToken);
