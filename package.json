@@ -25,9 +25,9 @@
   "scripts": {
     "build":"tsc",
     "test": "./node_modules/.bin/dotenvx run -f .env -- borp",
-    "db:create:tables": "tsx --env-file=.env scripts/createTables.ts",
-    "db:create": "tsx --env-file=.env scripts/createDatabase.ts",
-    "db:purge": "tsx --env-file=.env scripts/dropDatabase.ts",
+    "db:create:tables": "./node_modules/.bin/dotenvx run -f .env -- tsx scripts/createTables.ts",
+    "db:create": "./node_modules/.bin/dotenvx run -f .env -- tsx scripts/createDatabase.ts",
+    "db:purge": "./node_modules/.bin/dotenvx run -f .env -- tsx scripts/dropDatabase.ts",
     "db:init": "npm run db:purge && npm run db:create && npm run db:create:tables"
   }
 }
