@@ -43,5 +43,11 @@ jobs:
           DB_USER: root
           DB_PASSWORD: testRootPassword
         run: |
-          DB_CONNECTION=mysql DB_HOST=127.0.0.1 DB_PORT=3306 DB_NAME=testdb DB_USER=root DB_PASSWORD=testRootPassword npm run db:create:tables
+          echo "DB_CONNECTION=mysql" > .env
+          echo "DB_HOST=127.0.0.1" >> .env
+          echo "DB_PORT=3306" >> .env
+          echo "DB_NAME=testdb" >> .env
+          echo "DB_USER=root" >> .env
+          echo "DB_PASSWORD=testRootPassword" >> .env
+          npm run db:create:tables
           npm run test
