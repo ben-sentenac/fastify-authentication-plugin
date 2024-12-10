@@ -43,5 +43,5 @@ jobs:
           DB_USER: root
           DB_PASSWORD: testRootPassword
         run: |
-          npm run db:create:tables
+          DB_CONNECTION=mysql DB_HOST=127.0.0.1 DB_PORT=3306 DB_NAME=testdb DB_USER=root DB_PASSWORD=testRootPassword npm run db:create:tables
           npm run test
