@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { hash,compare } from  'bcrypt';
-import { User } from "./types.js";
+import { User } from "../types/types.js";
 import fastifyJwt from "@fastify/jwt";
 import { Ajv,Schema } from 'ajv';
 
@@ -39,5 +39,3 @@ export function validateSchema(schema:Schema,object:Record<string,any>) {
     }
     return valid;
 }
-
-

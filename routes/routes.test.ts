@@ -3,9 +3,9 @@ import assert from 'node:assert';
 import fastify from 'fastify';
 import fastifyRateLimit from '@fastify/rate-limit';
 import fastifyCors from '@fastify/cors';
-import authentication from './index.js';
+import authentication from '../index.js';
 import { FastifyMySQLOptions } from '@fastify/mysql';
-import { truncateUsersTable } from './utils/test-utils.js';
+import { truncateUsersTable } from '../utils/test-utils.js';
 
 describe('Auth plugin routes test suite with cookie', async () => {
     let pool: FastifyMySQLOptions = {

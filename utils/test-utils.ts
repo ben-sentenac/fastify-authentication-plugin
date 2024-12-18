@@ -12,7 +12,6 @@ export async function getConnection(database = false) {
     return conn;
 }
 
-
 export async function truncateUsersTable() {
     const conn = await getConnection(true);
     try {
