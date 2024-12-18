@@ -49,7 +49,11 @@ describe('Auth plugin routes test suite with cookie', async () => {
         databasePool: pool,
         tokensOptions:{
             accessTokenSecret:'some-secret',
+            refreshTokenSecret:'refresh-secret',
             accessTokenExpires:accessTokenExpires
+        },
+        cookieOptions:{
+            secret:'cookie-secret'
         }
     });
 

@@ -22,7 +22,6 @@ export async function routes(fastify: FastifyInstance) {
         } catch (error) {
             return reply.code(500).send({ error: 'Error registering user' });
         }
-
     });
 
     //TODO add ratelimit 
@@ -81,6 +80,7 @@ export async function routes(fastify: FastifyInstance) {
     //TODO add logic if token stored in header
     fastify.post('/logout',{preHandler:fastify.authenticate}, async (request,reply) => {
         const refreshToken = request.cookies.refreshToken;
+        console.log(refreshToken)
         try {
             if (refreshToken) {
                 //await removeRefreshToken(refreshToken);

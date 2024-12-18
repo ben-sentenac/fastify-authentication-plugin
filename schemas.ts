@@ -43,7 +43,8 @@ export const PluginOptionsSchema = {
                 passwordResetToken:{
                     type:'string'
                 },
-            }
+            },
+            required:['accessTokenSecret','refreshTokenSecret'],
         },
         cookieOptions:{
             type:'object',
@@ -68,13 +69,12 @@ export const PluginOptionsSchema = {
                         }
                     }
                 }
-            }
+            },
+            required:['secret']
         }
-    }
+    },
+    required:['databasePool','tokensOptions','cookieOptions']
 };
-
-
-
 
 export const  LoginRequestRouteSchema = {
     body:{
@@ -86,13 +86,13 @@ export const  LoginRequestRouteSchema = {
             },
             password:{
                 type:'string',
-                minLength:9
+                minLength:9,
+                maxLength:64
             }
         },
         required:['email','password']
     }
 };
-
 
 export const RegisterRouteSchema = {
     body:{
@@ -107,7 +107,8 @@ export const RegisterRouteSchema = {
             },
             password:{
                 type:'string',
-                minLength:9
+                minLength:9,
+                maxLength:64
             }
         },
         required:['email','username','password']
